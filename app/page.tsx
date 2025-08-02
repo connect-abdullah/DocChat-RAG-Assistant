@@ -2,10 +2,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { 
   getCurrentUser, 
-  signUp, 
-  login, 
-  uploadFile, 
-  listFiles, 
   saveMessage, 
   createSession, 
   fetchLastMessages,
@@ -14,12 +10,15 @@ import {
 } from "@/server/server.actions";
 import { useRouter } from "next/navigation";
 import { User } from "@/constants/types";
-import { supabase } from "@/db/supabase";
 import UploadFile from "@/components/UploadFile";
 import ShowFiles from "@/components/ShowFiles";
 import { queryRelevantChunks } from "@/server/embed.actions";
 import fetchAnswer from "@/server/ai-model";
-import { testAPI } from "@/server/test-api";
+import ChatMessages from "@/components/ChatMessages";
+import { Toaster } from 'react-hot-toast';
+import ChatHeader from "@/components/ChatHeader";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 
 interface ChatMessage {
   id: string;
@@ -205,7 +204,7 @@ const Page = () => {
       if (chunks.length === 0) {
         const aiResponse = currentDocument 
           ? `I couldn't find any relevant information in "${currentDocument.name}" to answer that question. Please try asking something else about this document.`
-          : "I couldn't find any relevant information in your documents to answer that question. Please try asking something else or upload a document that might contain the information you're looking for.";
+          : "I couldn't find any relevant information in your document to answer that question. Please try asking something else or upload a document that might contain the information you're looking for.";
         
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -278,45 +277,14 @@ const Page = () => {
     setCurrentDocument(null);
     setChatMessage("");
     
-    // Close sidebar on mobile when file is selected
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
     
-    // If no file selected, we're done
     if (!fileName) {
       return;
     }
     
-    // If file selected, let the useEffect handle initialization
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
-  const handleTestAPI = async () => {
-    const result = await testAPI();
-    alert(result);
-  };
-
-  const handleTestDocument = async () => {
-    if (!selectedFile || !user?.id) {
-      alert("Please select a file first");
-      return;
-    }
-    
-    // Test document loading
-    const document = await getDocumentByFileName(selectedFile, user.id);
-    
-    // Test vector search
-    if (document) {
-      const chunks = await queryRelevantChunks("test question", document.id);
-      alert(`Document found: ${document.name}\nChunks found: ${chunks.length}`);
-    } else {
-      alert("Document not found in database");
-    }
   };
 
   // Convert UI messages to AI thread format
@@ -330,245 +298,120 @@ const Page = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col md:flex-row">
-      {/* Mobile Header */}
-      <div className="md:hidden bg-gray-800 border-b border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">DC</span>
+    <div className="h-screen bg-gray-900">
+      {/* Mobile Header - Fixed at top */}
+      <Header 
+        variant="mobile-top"
+        userEmail={user?.email}
+        onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
+
+      {/* Main content Area */}
+      <div className="flex flex-col md:flex-row h-full pt-[72px] md:pt-0">
+        {/* Sidebar */}
+        <div className={`${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } md:w-80 w-full md:relative fixed inset-y-0 left-0 z-50 bg-gray-800 border-r border-gray-700 transition-transform duration-300 flex flex-col`}>
+          {/* Desktop Header */}
+          <Header 
+            variant="desktop"
+            userEmail={user?.email}
+            onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          />
+
+          {/* Mobile Header with Back Button */}
+          <Header 
+            variant="mobile-sidebar"
+            userEmail={user?.email}
+            onBackClick={() => setIsSidebarOpen(false)}
+          />
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Upload Section */}
+            <div className="p-4 border-b border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-300 mb-3">Upload Documents</h2>
+              {user && <UploadFile user={user} />}
             </div>
-            <div>
-              <h1 className="font-semibold text-white">Document Chat</h1>
-              <p className="text-xs text-gray-400">{user?.email}</p>
+
+            {/* Files Section */}
+            <div className="p-4">
+              <h2 className="text-sm font-semibold text-gray-300 mb-3">Your Documents</h2>
+              {user && <ShowFiles user={user} onFileSelect={handleFileSelect} selectedFile={selectedFile} />}
             </div>
           </div>
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-      </div>
 
-      {/* Sidebar */}
-      <div className={`${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-      } md:w-80 w-full md:relative fixed inset-y-0 left-0 z-50 bg-gray-800 border-r border-gray-700 transition-transform duration-300 flex flex-col`}>
-        {/* Desktop Header */}
-        <div className="hidden md:block p-4 border-b border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">DC</span>
-              </div>
-              <div>
-                <h1 className="font-semibold text-white">Document Chat</h1>
-                <p className="text-xs text-gray-400">{user?.email}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-700 space-y-2 mb-[2px]">
+            <Footer user={user} selectedFile={selectedFile}/>
           </div>
         </div>
 
-        {/* Mobile Header with Back Button */}
-        <div className="md:hidden p-4 border-b border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        {/* Overlay for mobile */}
+        {isSidebarOpen && (
+          <div 
+            className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col bg-gray-900">
+          {/* Chat Header */}
+          <ChatHeader selectedFile={selectedFile} sessionId={sessionId} />
+
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <ChatMessages isInitializing={isInitializing} isLoading={isLoading} messages={messages}/>
+            {/* Invisible div for scroll to bottom */}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-4 border-t border-gray-700 bg-gray-800" ref={inputRef}>
+            <form onSubmit={handleSubmit} className="flex gap-3">
+              <input
+                type="text"
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                placeholder="Ask a question about your document..."
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm"
+                disabled={isLoading || isInitializing}
+              />
               <button
-                onClick={() => setIsSidebarOpen(false)}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                type="submit"
+                disabled={!chatMessage.trim() || !selectedFile || isLoading}
+                className="px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors text-sm whitespace-nowrap"
               >
-                <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                Send
               </button>
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">DC</span>
-              </div>
-              <div>
-                <h1 className="font-semibold text-white">Document Chat</h1>
-                <p className="text-xs text-gray-400">{user?.email}</p>
-              </div>
-            </div>
+            </form>
           </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Upload Section */}
-          <div className="p-4 border-b border-gray-700">
-            <h2 className="text-sm font-semibold text-gray-300 mb-3">Upload Documents</h2>
-            {user && <UploadFile user={user} />}
-          </div>
-
-          {/* Files Section */}
-          <div className="p-4">
-            <h2 className="text-sm font-semibold text-gray-300 mb-3">Your Documents</h2>
-            {user && <ShowFiles user={user} onFileSelect={handleFileSelect} selectedFile={selectedFile} />}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-700 space-y-2">
-          <button
-            onClick={handleTestAPI}
-            className="w-full px-3 py-2 text-sm text-blue-400 hover:bg-blue-900/20 rounded-lg transition-colors"
-          >
-            Test API
-          </button>
-          <button
-            onClick={handleTestDocument}
-            className="w-full px-3 py-2 text-sm text-purple-400 hover:bg-purple-900/20 rounded-lg transition-colors"
-          >
-            Test Document
-          </button>
-          <button
-            onClick={handleLogout}
-            className="w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-          >
-            Sign Out
-          </button>
         </div>
       </div>
-
-      {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-gray-900">
-        {/* Chat Header */}
-        <div className="p-4 border-b border-gray-700 bg-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-white truncate">
-                {selectedFile ? `Chat with ${selectedFile}` : "Chat with your documents"}
-              </h2>
-              <p className="text-sm text-gray-400 truncate">
-                {selectedFile ? "Ask questions about your document" : "Select a document to start chatting"}
-              </p>
-              {sessionId && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Session: {sessionId.slice(0, 8)}...
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {isInitializing ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="flex items-center gap-2 text-gray-400">
-                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span className="text-sm">Loading document...</span>
-              </div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="text-center text-gray-400">
-                <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <p className="text-sm">Select a document to start chatting</p>
-              </div>
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <div key={msg.id} className={`flex gap-3 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {msg.type === 'ai' && (
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                  </div>
-                )}
-                <div className={`max-w-[85%] sm:max-w-[70%] ${msg.type === 'user' ? 'order-1' : 'order-2'}`}>
-                  <div className={`rounded-lg p-3 ${
-                    msg.type === 'user' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-700 text-white'
-                  }`}>
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {msg.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
-                {msg.type === 'user' && (
-                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-sm font-medium">U</span>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-          {isLoading && (
-            <div className="flex gap-3 justify-start">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <div className="max-w-[85%] sm:max-w-[70%]">
-                <div className="bg-gray-700 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          {/* Invisible div for scroll to bottom */}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="p-4 border-t border-gray-700 bg-gray-800" ref={inputRef}>
-          <form onSubmit={handleSubmit} className="flex gap-3">
-            <input
-              type="text"
-              value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              placeholder="Ask a question about your document..."
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm"
-              disabled={isLoading || isInitializing}
-            />
-            <button
-              type="submit"
-              disabled={!chatMessage.trim() || !selectedFile || isLoading}
-              className="px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors text-sm whitespace-nowrap"
-            >
-              Send
-            </button>
-          </form>
-        </div>
-      </div>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            border: '1px solid #374151',
+          },
+          success: {
+            style: {
+              background: '#065f46',
+              border: '1px solid #10b981',
+            },
+          },
+          error: {
+            style: {
+              background: '#7f1d1d',
+              border: '1px solid #ef4444',
+            },
+          },
+        }}
+      />
     </div>
   );
 };

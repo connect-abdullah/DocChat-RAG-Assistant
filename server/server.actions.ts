@@ -1,8 +1,5 @@
 import { supabase } from "@/db/supabase";
 
-
-
-
 export const saveMessage = async ({
   sessionId,
   role,
