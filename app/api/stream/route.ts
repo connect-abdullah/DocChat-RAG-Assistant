@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
                 } catch (e) {
-                  // Skip invalid JSON
+                  console.error(e)
                 }
               }
             }
