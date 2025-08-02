@@ -1,9 +1,31 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/server/server.actions";
 import Galaxy from '@/components/galaxy';
 import toast, { Toaster } from 'react-hot-toast';
+
+// Memoized background component to prevent re-renders
+const GalaxyBackground = memo(() => {
+  return (
+    <div className="absolute inset-0 z-0">
+      <Galaxy 
+        mouseRepulsion={true}
+        mouseInteraction={true}
+        density={2.2}
+        glowIntensity={0.4}
+        twinkleIntensity={0.6}
+        rotationSpeed={0}
+        repulsionStrength={0.4}
+        starSpeed={1.1}
+        speed={0.6}
+      />
+      <div className="absolute inset-0 bg-slate-900/10 pointer-events-none z-10" />
+    </div>
+  );
+});
+
+GalaxyBackground.displayName = 'GalaxyBackground';
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -11,7 +33,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     const trimmedEmail = email.trim();
@@ -40,27 +62,30 @@ const LoginPage = () => {
       toast.error("An error occurred during login.");
       console.error(error);
     }
-  };
+  }, [email, password, router]);
+
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+  }, []);
+
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  }, []);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
+  const navigateToSignUp = useCallback(() => {
+    router.push("/sign-up");
+  }, [router]);
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
       {/* Galaxy background */}
-      <div className="absolute inset-0 z-0 backdrop-blur-2xl">
-        <Galaxy 
-          mouseRepulsion={true}
-          mouseInteraction={true}
-          density={2.2}
-          glowIntensity={0.4}
-          twinkleIntensity={0.6}
-          rotationSpeed={0}
-          repulsionStrength={0.4}
-          starSpeed={1.1}
-          speed={0.6}
-        />
-        <div className="absolute inset-0 bg-slate-900/30 pointer-events-none z-10" />
-      </div>
+      <GalaxyBackground />
       {/* Login form container */}
-      <div className="relative z-10 max-w-md w-full mx-auto bg-slate-800/20 backdrop-blur-xl rounded-xl shadow-2xl p-8 mt-10 border border-slate-600/30">
+      <div className="relative z-10 max-w-md w-full mx-auto backdrop-blur-xl rounded-xl shadow-2xl p-8 mt-10 border border-slate-600/30">
         <h2 className="text-2xl font-semibold text-center text-slate-100 mb-6">
           Login
         </h2>
@@ -71,7 +96,7 @@ const LoginPage = () => {
               type="email"
               className="block w-full mt-1 px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-md text-slate-100 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 placeholder-slate-400 backdrop-blur-sm"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               required
               autoComplete="username"
             />
@@ -83,14 +108,14 @@ const LoginPage = () => {
                 type={showPassword ? "text" : "password"}
                 className="block w-full mt-1 px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-md text-slate-100 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 pr-12 placeholder-slate-400 backdrop-blur-sm"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-sm focus:outline-none transition-colors"
-                onClick={() => setShowPassword((prev) => !prev)}
+                onClick={togglePasswordVisibility}
                 tabIndex={-1}
               >
                 {showPassword ? "Hide" : "Show"}
@@ -107,7 +132,7 @@ const LoginPage = () => {
             Already have an account?{" "}
             <button
               className="text-emerald-400 hover:text-emerald-300 hover:underline transition-colors"
-              onClick={() => router.push("/sign-up")}
+              onClick={navigateToSignUp}
               type="button"
             >
               SignUp
