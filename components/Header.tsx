@@ -18,23 +18,23 @@ export default function Header({ variant, userEmail, onMenuToggle, onBackClick }
       alt="DocChat Favicon"
       width={40}
       height={40}
-      className="rounded-lg"
+      className="rounded-lg shadow-lg"
     />
   );
 
   const renderUserInfo = () => (
     <div>
-      <h1 className="font-semibold text-white">DocChat</h1>
-      <p className="text-xs text-gray-400">{userEmail}</p>
+      <h1 className="font-semibold text-slate-100">DocChat</h1>
+      <p className="text-xs text-slate-400">{userEmail}</p>
     </div>
   );
 
   const renderMenuButton = () => (
     <button
       onClick={onMenuToggle}
-      className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+      className="p-2 hover:bg-slate-600/50 rounded-lg transition-all duration-200 hover:shadow-lg"
     >
-      <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
@@ -43,9 +43,9 @@ export default function Header({ variant, userEmail, onMenuToggle, onBackClick }
   const renderBackButton = () => (
     <button
       onClick={onBackClick}
-      className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+      className="p-2 hover:bg-slate-600/50 rounded-lg transition-all duration-200 hover:shadow-lg"
     >
-      <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
       </svg>
     </button>
@@ -53,7 +53,7 @@ export default function Header({ variant, userEmail, onMenuToggle, onBackClick }
 
   if (variant === 'mobile-top') {
     return (
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-800 border-b border-gray-700 p-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600/50 p-4 shadow-lg">
         <div className={baseClasses}>
           <div className={logoClasses}>
             {renderLogo()}
@@ -67,7 +67,7 @@ export default function Header({ variant, userEmail, onMenuToggle, onBackClick }
 
   if (variant === 'desktop') {
     return (
-      <div className="hidden md:block p-4 border-b border-gray-700 pb-[22.75px]">
+      <div className="hidden md:block p-4 border-b border-slate-600/50 pb-[22.75px] bg-gradient-to-r from-slate-800/80 to-slate-700/80">
         <div className={baseClasses}>
           <div className={logoClasses}>
             {renderLogo()}
@@ -81,7 +81,7 @@ export default function Header({ variant, userEmail, onMenuToggle, onBackClick }
 
   if (variant === 'mobile-sidebar') {
     return (
-      <div className="md:hidden p-4 border-b border-gray-700">
+      <div className="md:hidden p-4 border-b border-slate-600/50 bg-gradient-to-r from-slate-800/80 to-slate-700/80">
         <div className={baseClasses}>
           <div className={logoClasses}>
             {renderBackButton()}

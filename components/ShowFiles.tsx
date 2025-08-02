@@ -82,7 +82,7 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
       <div className="space-y-2">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="animate-pulse">
-            <div className="h-10 sm:h-12 bg-gray-700 rounded-lg"></div>
+            <div className="h-10 sm:h-12 bg-slate-700/50 rounded-lg"></div>
           </div>
         ))}
       </div>
@@ -100,13 +100,13 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
   if (files.length === 0) {
     return (
       <div className="text-center py-4">
-        <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-3">
-          <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-8 h-8 sm:w-12 sm:h-12 bg-slate-700/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+          <svg className="w-4 h-4 sm:w-6 sm:h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <p className="text-xs sm:text-sm text-gray-400">No documents yet</p>
-        <p className="text-xs text-gray-500 mt-1">Upload a document to get started</p>
+        <p className="text-xs sm:text-sm text-slate-400">No documents yet</p>
+        <p className="text-xs text-slate-500 mt-1">Upload a document to get started</p>
       </div>
     );
   }
@@ -116,26 +116,26 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
       {files.map((file) => (
         <div
           key={file.name}
-          className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all ${
+          className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${
             selectedFile === file.name
-              ? "bg-blue-900/20 border-blue-500"
-              : "bg-gray-800 border-gray-700 hover:bg-gray-700"
+              ? "bg-emerald-900/20 border-emerald-500/50 shadow-emerald-500/25"
+              : "bg-slate-800/50 border-slate-600/50 hover:bg-slate-700/50"
           }`}
           onClick={() => handleFileClick(file.name)}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-white truncate">
+                <p className="text-xs sm:text-sm font-medium text-slate-100 truncate">
                   {file.name}
                 </p>
                 {file.updated_at && (
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-400">
                     {new Date(file.updated_at).toLocaleDateString()}
                   </p>
                 )}
@@ -147,7 +147,7 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
                 handleDownload(file.name);
               }}
               disabled={downloading === file.name}
-              className="p-1 text-gray-400 hover:text-gray-200 transition-colors"
+              className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
               title="Download"
             >
               {downloading === file.name ? (

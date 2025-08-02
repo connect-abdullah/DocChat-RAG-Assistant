@@ -43,7 +43,7 @@ const Footer: React.FC<FooterProps> = ({ user, selectedFile }) => {
 //   };
 
   return (
-    <div className=" p-[1px] space-y-2 ">
+    <div className="space-y-2 ">
       {/* <button
         onClick={handleTestAPI}
         className="w-full px-3 py-2 text-sm text-blue-400 hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -58,7 +58,7 @@ const Footer: React.FC<FooterProps> = ({ user, selectedFile }) => {
       </button> */}
       <button
         onClick={handleLogout}
-        className="w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+        className="w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 rounded-lg transition-all duration-200 hover:shadow-lg"
       >
         Sign Out
       </button>

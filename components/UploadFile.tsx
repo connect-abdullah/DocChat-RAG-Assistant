@@ -55,14 +55,14 @@ export default function UploadFile({ user }: { user: User }) {
     <div className="space-y-3">
       {!file ? (
         <label className="block">
-          <div className="border-2 border-dashed border-gray-600 rounded-lg p-3 sm:p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-900/20 transition-colors">
-            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-900/50 rounded-lg flex items-center justify-center mx-auto mb-2">
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="border-2 border-dashed border-slate-500/50 rounded-lg p-3 sm:p-4 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-900/20 transition-all duration-200 hover:shadow-lg">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             </div>
-            <p className="text-xs sm:text-sm font-medium text-gray-300">Drop file here or click to upload</p>
-            <p className="text-xs text-gray-500 mt-1">PDF, DOCX up to 10MB</p>
+            <p className="text-xs sm:text-sm font-medium text-slate-300">Drop file here or click to upload</p>
+            <p className="text-xs text-slate-500 mt-1">PDF, DOCX up to 10MB</p>
           </div>
           <input
             ref={fileInputRef}
@@ -75,24 +75,24 @@ export default function UploadFile({ user }: { user: User }) {
         </label>
       ) : (
         <div className="space-y-3">
-          <div className="bg-blue-900/20 border border-blue-500 rounded-lg p-3">
+          <div className="bg-emerald-900/20 border border-emerald-500/50 rounded-lg p-3 shadow-lg">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-white truncate">
+                <p className="text-xs sm:text-sm font-medium text-slate-100 truncate">
                   {file.name}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-slate-400">
                   {(file.size / 1024).toFixed(1)} KB
                 </p>
               </div>
               <button
                 onClick={handleRemoveFile}
-                className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                className="p-1 text-slate-400 hover:text-red-400 transition-colors"
                 disabled={uploading}
                 type="button"
               >
@@ -106,7 +106,7 @@ export default function UploadFile({ user }: { user: User }) {
           <button
             onClick={handleUpload}
             disabled={uploading}
-            className="w-full px-3 py-2 bg-blue-500 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+            className="w-full px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:from-emerald-500 hover:to-teal-500 disabled:from-slate-600 disabled:to-slate-600 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-emerald-500/25"
             type="button"
           >
             {uploading ? (
@@ -124,13 +124,13 @@ export default function UploadFile({ user }: { user: User }) {
       )}
       
       {message && (
-        <div className="p-2 bg-green-900/20 border border-green-500 rounded-lg">
-          <p className="text-xs text-green-400">{message}</p>
+        <div className="p-2 bg-emerald-900/20 border border-emerald-500/50 rounded-lg shadow-lg">
+          <p className="text-xs text-emerald-400">{message}</p>
         </div>
       )}
       
       {error && (
-        <div className="p-2 bg-red-900/20 border border-red-500 rounded-lg">
+        <div className="p-2 bg-red-900/20 border border-red-500/50 rounded-lg shadow-lg">
           <p className="text-xs text-red-400">{error}</p>
         </div>
       )}

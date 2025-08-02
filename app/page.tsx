@@ -298,7 +298,7 @@ const Page = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-900">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Mobile Header - Fixed at top */}
       <Header 
         variant="mobile-top"
@@ -311,7 +311,7 @@ const Page = () => {
         {/* Sidebar */}
         <div className={`${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        } md:w-80 w-full md:relative fixed inset-y-0 left-0 z-50 bg-gray-800 border-r border-gray-700 transition-transform duration-300 flex flex-col`}>
+        } md:w-80 w-full md:relative fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-800 via-slate-700 to-slate-800 border-r border-slate-600/50 transition-transform duration-300 flex flex-col shadow-xl`}>
           {/* Desktop Header */}
           <Header 
             variant="desktop"
@@ -329,20 +329,20 @@ const Page = () => {
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             {/* Upload Section */}
-            <div className="p-4 border-b border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Upload Documents</h2>
+            <div className="p-4 border-b border-slate-600/50">
+              <h2 className="text-sm font-semibold text-slate-200 mb-3">Upload Documents</h2>
               {user && <UploadFile user={user} />}
             </div>
 
             {/* Files Section */}
             <div className="p-4">
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Your Documents</h2>
+              <h2 className="text-sm font-semibold text-slate-200 mb-3">Your Documents</h2>
               {user && <ShowFiles user={user} onFileSelect={handleFileSelect} selectedFile={selectedFile} />}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-700 space-y-2 mb-[2px]">
+          <div className="p-4 border-t border-slate-600/50 space-y-2 mb-[2px]">
             <Footer user={user} selectedFile={selectedFile}/>
           </div>
         </div>
@@ -350,13 +350,13 @@ const Page = () => {
         {/* Overlay for mobile */}
         {isSidebarOpen && (
           <div 
-            className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col bg-gray-900">
+        <div className="flex-1 flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
           {/* Chat Header */}
           <ChatHeader selectedFile={selectedFile} sessionId={sessionId} />
 
@@ -368,20 +368,20 @@ const Page = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-gray-700 bg-gray-800" ref={inputRef}>
+          <div className="p-4 border-t border-slate-600/50 bg-gradient-to-r from-slate-800/80 to-slate-700/80 backdrop-blur-sm" ref={inputRef}>
             <form onSubmit={handleSubmit} className="flex gap-3">
               <input
                 type="text"
                 value={chatMessage}
                 onChange={(e) => setChatMessage(e.target.value)}
                 placeholder="Ask a question about your document..."
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 text-sm"
+                className="flex-1 bg-slate-700/50 border border-slate-600/50 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 text-sm backdrop-blur-sm"
                 disabled={isLoading || isInitializing}
               />
               <button
                 type="submit"
                 disabled={!chatMessage.trim() || !selectedFile || isLoading}
-                className="px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors text-sm whitespace-nowrap"
+                className="px-4 sm:px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-500 hover:to-teal-500 disabled:from-slate-600 disabled:to-slate-600 disabled:cursor-not-allowed transition-all duration-200 text-sm whitespace-nowrap shadow-lg hover:shadow-emerald-500/25"
               >
                 Send
               </button>
@@ -394,13 +394,13 @@ const Page = () => {
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1f2937',
-            color: '#fff',
-            border: '1px solid #374151',
+            background: '#1e293b',
+            color: '#f1f5f9',
+            border: '1px solid #475569',
           },
           success: {
             style: {
-              background: '#065f46',
+              background: '#064e3b',
               border: '1px solid #10b981',
             },
           },
