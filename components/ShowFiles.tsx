@@ -21,7 +21,7 @@ export default function ShowFiles({ user }: { user: User }) {
           return;
         }
         const data = await listFiles(user?.id);
-        console.log(data)
+        // console.log(data)
         if (Array.isArray(data)) {
           setFiles(data);
         } else {
