@@ -11,6 +11,7 @@ interface ChatMessagesProps {
   isInitializing: boolean;
   isLoading: boolean;
   messages: ChatMessage[];
+  streamingMessageId?: string | null;
 }
 
 const icons = {
@@ -28,7 +29,7 @@ const icons = {
   ),
 };
 
-const ChatMessages = ({ isInitializing, isLoading, messages }: ChatMessagesProps) => {
+const ChatMessages = ({ isInitializing, isLoading, messages, streamingMessageId }: ChatMessagesProps) => {
   if (isInitializing)
     return (
       <div className="flex items-center justify-center h-32 text-slate-400 gap-2">
@@ -56,12 +57,18 @@ const ChatMessages = ({ isInitializing, isLoading, messages }: ChatMessagesProps
       <div className="flex flex-col gap-2">
         {messages.map(({ id, type, content, timestamp }) => {
           const isUser = type === 'user';
+          const isStreaming = id === streamingMessageId;
           return (
             <div key={id} className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
               {!isUser && <div className="flex flex-col items-center mr-2">{icons.ai}</div>}
               <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[90%] sm:max-w-[70%]`}>
                 <div className={`rounded-2xl px-3 py-1.5 sm:px-4 sm:py-2 shadow-lg ${isUser ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-slate-100 rounded-br-md' : 'bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white rounded-bl-md'}`}>
-                  <p className="whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed">{content}</p>
+                  <p className="whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed">
+                    {content}
+                    {isStreaming && (
+                      <span className="inline-block w-2 h-4 bg-white/80 ml-1 animate-pulse rounded-sm"></span>
+                    )}
+                  </p>
                 </div>
                 <span className={`text-[11px] sm:text-xs text-slate-400 mt-1 mb-1 ${isUser ? 'pr-1' : 'pl-1'}`}>
                   {timestamp.toLocaleTimeString()}
@@ -72,7 +79,7 @@ const ChatMessages = ({ isInitializing, isLoading, messages }: ChatMessagesProps
           );
         })}
       </div>
-      {isLoading && (
+      {isLoading && !streamingMessageId && (
         <div className="flex w-full justify-start mt-2">
           <div className="flex flex-col items-center mr-2">{icons.ai}</div>
           <div className="max-w-[90%] sm:max-w-[70%] flex items-center">

@@ -13,7 +13,6 @@ import { User } from "@/constants/types";
 import UploadFile from "@/components/UploadFile";
 import ShowFiles from "@/components/ShowFiles";
 import { queryRelevantChunks } from "@/server/embed.actions";
-import fetchAnswer from "@/server/ai-model";
 import ChatMessages from "@/components/ChatMessages";
 import { Toaster } from 'react-hot-toast';
 import ChatHeader from "@/components/ChatHeader";
@@ -37,6 +36,7 @@ const Page = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<{ id: string; name: string } | null>(null);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const initializingRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -190,14 +190,14 @@ const Page = () => {
     const currentMessage = chatMessage;
     setChatMessage("");
 
-    try {
-      // Save user message to database
-      await saveMessage({
-        sessionId: currentSessionId!,
-        role: "user",
-        content: currentMessage,
-      });
+    // Save user message to database
+    await saveMessage({
+      sessionId: currentSessionId!,
+      role: "user",
+      content: currentMessage,
+    });
 
+    try {
       // Get relevant chunks from the current document
       const chunks = await queryRelevantChunks(currentMessage, currentDocument?.id);
       
@@ -224,24 +224,77 @@ const Page = () => {
         return;
       }
 
-      // Get AI response
-      const answer = await fetchAnswer(chunks, currentMessage, convertMessagesToThread(messages));
-      
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+      // Create streaming AI message
+      const streamingMessageId = Date.now().toString();
+      const streamingMessage: ChatMessage = {
+        id: streamingMessageId,
         type: 'ai',
-        content: answer,
+        content: "",
         timestamp: new Date(),
       };
       
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages(prev => [...prev, streamingMessage]);
+      setStreamingMessageId(streamingMessageId);
 
-      // Save AI message to database
-      await saveMessage({
-        sessionId: currentSessionId!,
-        role: "ai",
-        content: answer,
+      // Start streaming response
+      const response = await fetch('/api/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: currentSessionId,
+          chunks,
+          chatMessage: currentMessage,
+          threadMessages: convertMessagesToThread(messages),
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            break;
+          }
+          
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.content) {
+                  setMessages(prev => 
+                    prev.map(msg => 
+                      msg.id === streamingMessageId 
+                        ? { ...msg, content: msg.content + data.content }
+                        : msg
+                    )
+                  );
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+        setStreamingMessageId(null);
+      }
 
     } catch (error) {
       console.error("Error in chat:", error);
@@ -362,7 +415,12 @@ const Page = () => {
 
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <ChatMessages isInitializing={isInitializing} isLoading={isLoading} messages={messages}/>
+            <ChatMessages 
+              isInitializing={isInitializing} 
+              isLoading={isLoading} 
+              messages={messages}
+              streamingMessageId={streamingMessageId}
+            />
             {/* Invisible div for scroll to bottom */}
             <div ref={messagesEndRef} />
           </div>

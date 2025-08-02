@@ -13,7 +13,8 @@ interface ChatMessage {
 const fetchAnswer = async (
   chunks: Chunk[],
   chatMessage: string,
-  threadMessages: ChatMessage[]
+  threadMessages: ChatMessage[],
+  stream: boolean = false
 ) => {
   try {
     const context = chunks.map((c: Chunk) => c.content).join("\n\n");
@@ -51,6 +52,7 @@ Remember: You're here to help them explore and understand their document, so alw
       messages,
       max_tokens: 512,
       temperature: 0.1,
+      ...(stream && { stream: true }),
     };
 
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -66,21 +68,32 @@ Remember: You're here to help them explore and understand their document, so alw
     if (!res.ok) {
       const errorText = await res.text();
       console.error("API Error Response:", errorText);
-      return `Error: API request failed with status ${res.status}.`;
+      throw new Error(`API request failed with status ${res.status}`);
     }
 
-    const result = await res.json();
-    const answer = result.choices?.[0]?.message?.content;
+    if (stream) {
+      if (!res.body) {
+        throw new Error("No response body");
+      }
+      return res.body;
+    } else {
+      const result = await res.json();
+      const answer = result.choices?.[0]?.message?.content;
 
-    if (!answer) {
-      console.error("No answer in response:", result);
-      return "Error: No response from AI model.";
+      if (!answer) {
+        console.error("No answer in response:", result);
+        return "Error: No response from AI model.";
+      }
+
+      return answer;
     }
-
-    return answer;
   } catch (error) {
     console.error("Error in fetchAnswer:", error);
-    return "Error: Failed to get response from AI.";
+    if (stream) {
+      throw error;
+    } else {
+      return "Error: Failed to get response from AI.";
+    }
   }
 };
 
