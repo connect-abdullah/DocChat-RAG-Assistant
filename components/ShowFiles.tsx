@@ -32,7 +32,7 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
         } else {
           setError("Failed to fetch files.");
         }
-      } catch (err) {
+      } catch  {
         setError("An error occurred while fetching files.");
       }
       setLoading(false);

@@ -53,7 +53,7 @@ const Page = () => {
       }
     };
     fetchUser();
-  }, []);
+  }, [router]);
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -285,7 +285,7 @@ const Page = () => {
                     )
                   );
                 }
-              } catch (e) {
+              } catch {
                 // Skip invalid JSON
               }
             }
