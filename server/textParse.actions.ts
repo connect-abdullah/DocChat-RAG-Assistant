@@ -1,5 +1,6 @@
 "use server";
-import { supabaseAdmin } from "@/lib/supabase.admin";
+import { supabaseAdmin } from "@/db/supabase.admin";
+import { processAndStoreChunks } from "@/server/embed.actions";
 
 export const parseText = async (documentId: string) => {
   const { data: pathData, error: pathError } = await supabaseAdmin
@@ -110,6 +111,12 @@ export const parseText = async (documentId: string) => {
     return {
       error: { message: updateError.message || "Failed to update document" },
     };
+  }
+
+  try {
+    await processAndStoreChunks(documentId, text);
+  } catch (embedError) {
+    console.error("Embedding failed:", embedError);
   }
 
   return { success: true, documentId };

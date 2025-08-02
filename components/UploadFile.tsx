@@ -17,11 +17,10 @@ export default function UploadFile({ user }: { user: User }) {
     setMessage("");
     setError("");
 
-    const filePath = `${user.id}/${Date.now()}_${file.name}`;
+    const filePath = `${user.id}/${file.name}`;
     const userId: string = user.id;
 
     const { documentId } = await uploadFile(filePath, file, userId);
-    // console.log("response -->" , documentId)
 
     if (!documentId) {
       setError("Upload failed. Please try again.");
@@ -53,68 +52,88 @@ export default function UploadFile({ user }: { user: User }) {
   };
 
   return (
-    <>
-      <h2 className="text-2xl font-bold text-blue-400 mb-6 text-center">
-        Upload a File
-      </h2>
-      <div className="flex flex-col gap-6">
-        {!file ? (
-          <label className="flex flex-col items-center justify-center border-2 border-dashed border-blue-500 rounded-lg p-6 cursor-pointer bg-gray-900 hover:bg-gray-700 transition-colors">
-            <span className="text-gray-300 mb-2 text-lg font-medium">
-              Click to select a file
-            </span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-              disabled={uploading}
-            />
-            <span className="text-xs text-gray-500">
-              (Max 10MB, any file type)
-            </span>
-          </label>
-        ) : (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-900 border border-gray-700 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-blue-300 font-medium truncate max-w-[180px]">
-                {file.name}
-              </span>
-              <span className="text-xs text-gray-400">
-                ({(file.size / 1024).toFixed(1)} KB)
-              </span>
+    <div className="space-y-3">
+      {!file ? (
+        <label className="block">
+          <div className="border-2 border-dashed border-gray-600 rounded-lg p-3 sm:p-4 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-900/20 transition-colors">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-900/50 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
             </div>
-            <div className="flex gap-2">
+            <p className="text-xs sm:text-sm font-medium text-gray-300">Drop file here or click to upload</p>
+            <p className="text-xs text-gray-500 mt-1">PDF, DOCX up to 10MB</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={uploading}
+            accept=".pdf,.docx"
+          />
+        </label>
+      ) : (
+        <div className="space-y-3">
+          <div className="bg-blue-900/20 border border-blue-500 rounded-lg p-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-white truncate">
+                  {file.name}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {(file.size / 1024).toFixed(1)} KB
+                </p>
+              </div>
               <button
                 onClick={handleRemoveFile}
-                className="px-3 py-1 rounded-md bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors text-sm"
+                className="p-1 text-gray-400 hover:text-red-400 transition-colors"
                 disabled={uploading}
                 type="button"
               >
-                Remove
-              </button>
-              <button
-                onClick={handleUpload}
-                disabled={uploading}
-                className={`px-4 py-1.5 rounded-md font-semibold text-sm transition-colors ${
-                  uploading
-                    ? "bg-blue-300 text-white cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-                type="button"
-              >
-                {uploading ? "Uploading..." : "Upload"}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
-        )}
-        {message && (
-          <p className="mt-2 text-center text-sm text-green-400">{message}</p>
-        )}
-        {error && (
-          <p className="mt-2 text-center text-sm text-red-400">{error}</p>
-        )}
-      </div>
-    </>
+          
+          <button
+            onClick={handleUpload}
+            disabled={uploading}
+            className="w-full px-3 py-2 bg-blue-500 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+            type="button"
+          >
+            {uploading ? (
+              <div className="flex items-center justify-center gap-2">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="text-xs sm:text-sm">Uploading...</span>
+              </div>
+            ) : (
+              "Upload Document"
+            )}
+          </button>
+        </div>
+      )}
+      
+      {message && (
+        <div className="p-2 bg-green-900/20 border border-green-500 rounded-lg">
+          <p className="text-xs text-green-400">{message}</p>
+        </div>
+      )}
+      
+      {error && (
+        <div className="p-2 bg-red-900/20 border border-red-500 rounded-lg">
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
+    </div>
   );
 }

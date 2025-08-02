@@ -2,9 +2,15 @@ import { useEffect, useState } from "react";
 import { listFiles } from "@/server/server.actions";
 import { User } from "@/constants/types";
 import { FileObject } from "@/constants/types";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/db/supabase";
 
-export default function ShowFiles({ user }: { user: User }) {
+interface ShowFilesProps {
+  user: User;
+  onFileSelect?: (fileName: string | null) => void;
+  selectedFile?: string | null;
+}
+
+export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFilesProps) {
   const [files, setFiles] = useState<FileObject[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -21,7 +27,6 @@ export default function ShowFiles({ user }: { user: User }) {
           return;
         }
         const data = await listFiles(user?.id);
-        // console.log(data)
         if (Array.isArray(data)) {
           setFiles(data);
         } else {
@@ -34,6 +39,12 @@ export default function ShowFiles({ user }: { user: User }) {
     };
     fetchFiles();
   }, [user]);
+
+  const handleFileClick = (fileName: string) => {
+    if (onFileSelect) {
+      onFileSelect(selectedFile === fileName ? null : fileName);
+    }
+  };
 
   const handleDownload = async (fileName: string) => {
     setDownloading(fileName);
@@ -66,44 +77,92 @@ export default function ShowFiles({ user }: { user: User }) {
     }
   };
 
-  return (
-    <>
-      <h2 className="text-2xl font-bold text-blue-400 mb-6 text-center">Your Files</h2>
-      {loading ? (
-        <p className="text-center text-gray-300">Loading...</p>
-      ) : error ? (
-        <p className="text-center text-red-400">{error}</p>
-      ) : files.length === 0 ? (
-        <p className="text-center text-gray-400">No files found.</p>
-      ) : (
-        <div className="max-h-80 overflow-y-auto">
-          <ul className="divide-y divide-gray-700">
-            {files.map((file) => (
-              <li key={file.name} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <div className="flex-1">
-                  <span className="font-semibold text-blue-300">{file.name}</span>
-                  {file.updated_at && (
-                    <div className="text-xs text-gray-400">
-                      Updated: {new Date(file.updated_at).toLocaleString()}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleDownload(file.name)}
-                  disabled={downloading === file.name}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    downloading === file.name
-                      ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                      : "bg-green-600 text-white hover:bg-green-700"
-                  }`}
-                >
-                  {downloading === file.name ? "Downloading..." : "Download"}
-                </button>
-              </li>
-            ))}
-          </ul>
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="h-10 sm:h-12 bg-gray-700 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-xs sm:text-sm text-red-400">{error}</p>
+      </div>
+    );
+  }
+
+  if (files.length === 0) {
+    return (
+      <div className="text-center py-4">
+        <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-3">
+          <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
         </div>
-      )}
-    </>
+        <p className="text-xs sm:text-sm text-gray-400">No documents yet</p>
+        <p className="text-xs text-gray-500 mt-1">Upload a document to get started</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {files.map((file) => (
+        <div
+          key={file.name}
+          className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all ${
+            selectedFile === file.name
+              ? "bg-blue-900/20 border-blue-500"
+              : "bg-gray-800 border-gray-700 hover:bg-gray-700"
+          }`}
+          onClick={() => handleFileClick(file.name)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-white truncate">
+                  {file.name}
+                </p>
+                {file.updated_at && (
+                  <p className="text-xs text-gray-400">
+                    {new Date(file.updated_at).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload(file.name);
+              }}
+              disabled={downloading === file.name}
+              className="p-1 text-gray-400 hover:text-gray-200 transition-colors"
+              title="Download"
+            >
+              {downloading === file.name ? (
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
