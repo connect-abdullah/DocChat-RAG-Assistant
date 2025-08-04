@@ -31,13 +31,21 @@ export const fetchMessages = async () => {
   return data;
 };
 
-export const createSession = async (userId: string, documentId?: string, documentName?: string) => {
-  const sessionData: { user_id: string; document_id?: string; document_name?: string } = { user_id: userId };
-  
+export const createSession = async (
+  userId: string,
+  documentId?: string,
+  documentName?: string
+) => {
+  const sessionData: {
+    user_id: string;
+    document_id?: string;
+    document_name?: string;
+  } = { user_id: userId };
+
   if (documentId) {
     sessionData.document_id = documentId;
   }
-  
+
   if (documentName) {
     sessionData.document_name = documentName;
   }
@@ -109,6 +117,7 @@ export const uploadFile = async (
   const { data, error: uploadError } = await supabase.storage
     .from("user-files")
     .upload(filePath, file);
+
   if (uploadError) {
     console.error("Upload error:", uploadError);
     return { error: uploadError };
@@ -123,7 +132,7 @@ export const uploadFile = async (
       user_id: userId,
       name: file.name,
       path: filePath,
-      ext
+      ext,
     })
     .select()
     .single();
@@ -150,7 +159,10 @@ export const listFiles = async (userId: string) => {
   return data;
 };
 
-export const fetchLastMessages = async (sessionId: string, limit: number = 5) => {
+export const fetchLastMessages = async (
+  sessionId: string,
+  limit: number = 5
+) => {
   const { data, error } = await supabase
     .from("messages")
     .select("*")
@@ -166,11 +178,14 @@ export const fetchLastMessages = async (sessionId: string, limit: number = 5) =>
   return data || [];
 };
 
-export const getDocumentByFileName = async (fileName: string, userId: string) => {
+export const getDocumentByFileName = async (
+  fileName: string,
+  userId: string
+) => {
   // fileName is already the original filename (like "CV.pdf")
   // Construct the full path: userId/filename
   const fullPath = `${userId}/${fileName}`;
-  
+
   const { data, error } = await supabase
     .from("documents")
     .select("id, name, path")
@@ -186,7 +201,10 @@ export const getDocumentByFileName = async (fileName: string, userId: string) =>
   return data;
 };
 
-export const findExistingSession = async (userId: string, documentId: string) => {
+export const findExistingSession = async (
+  userId: string,
+  documentId: string
+) => {
   const { data, error } = await supabase
     .from("chat_sessions")
     .select("id, document_name")
@@ -202,4 +220,13 @@ export const findExistingSession = async (userId: string, documentId: string) =>
   }
 
   return data;
+};
+
+export const deleteFile = async (filePath: string) => {
+  const { error } = await supabase.storage.from("user-files").remove([filePath]);
+  if (error) {
+    console.error("Error deleting file:", error);
+    return error;
+  }
+  return true;
 };

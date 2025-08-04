@@ -64,16 +64,16 @@ export async function queryRelevantChunks(question: string, documentId?: string)
       // Query chunks from specific document
       query = supabaseAdmin.rpc("match_documents_by_id", {
         query_embedding: queryEmbedding,
-        match_threshold: 0.15,
-        match_count: 5,
+        match_threshold: 0.12,
+        match_count: 6,
         document_id: documentId,
       });
     } else {
       // Query all chunks (existing behavior)
       query = supabaseAdmin.rpc("match_documents", {
         query_embedding: queryEmbedding,
-        match_threshold: 0.15,
-        match_count: 5,
+        match_threshold: 0.12,
+        match_count: 6,
       });
     }
     

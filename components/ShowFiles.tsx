@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { listFiles } from "@/server/server.actions";
+import { deleteFile, listFiles } from "@/server/server.actions";
 import { User } from "@/constants/types";
 import { FileObject } from "@/constants/types";
 import { supabase } from "@/db/supabase";
+import { Trash2, Download } from "lucide-react";
 
 interface ShowFilesProps {
   user: User;
@@ -10,39 +11,95 @@ interface ShowFilesProps {
   selectedFile?: string | null;
 }
 
-export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFilesProps) {
+export default function ShowFiles({
+  user,
+  onFileSelect,
+  selectedFile,
+}: ShowFilesProps) {
   const [files, setFiles] = useState<FileObject[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const fetchFiles = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      if (!user?.id) {
+        setError("User not found.");
+        setLoading(false);
+        return;
+      }
+      const data = await listFiles(user?.id);
+      if (Array.isArray(data)) {
+        setFiles(data);
+      } else {
+        setError("Failed to fetch files.");
+      }
+    } catch {
+      setError("An error occurred while fetching files.");
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        if (!user?.id) {
-          setError("User not found.");
-          setLoading(false);
-          return;
-        }
-        const data = await listFiles(user?.id);
-        if (Array.isArray(data)) {
-          setFiles(data);
-        } else {
-          setError("Failed to fetch files.");
-        }
-      } catch  {
-        setError("An error occurred while fetching files.");
-      }
-      setLoading(false);
-    };
     fetchFiles();
+  }, [user]);
+
+  useEffect(() => {
+    const channel = supabase.channel("user-files-channel");
+    channel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "documents",
+      },
+      (payload) => {
+        console.log("Change received!", payload);
+        if (payload.eventType === "INSERT") {
+          setFiles((prevFiles) => [...prevFiles, payload.new as FileObject]);
+        } else if (payload.eventType === "UPDATE") {
+          setFiles((prevFiles) =>
+            prevFiles.map((file) =>
+              file.id === (payload.new as FileObject).id
+                ? (payload.new as FileObject)
+                : file
+            )
+          );
+        } else if (payload.eventType === "DELETE") {
+          setFiles((prevFiles) =>
+            prevFiles.filter(
+              (file) => file.id !== (payload.old as FileObject).id
+            )
+          );
+        }
+      }
+    );
+    channel.subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const handleFileClick = (fileName: string) => {
     if (onFileSelect) {
       onFileSelect(selectedFile === fileName ? null : fileName);
+    }
+  };
+
+  const handleDelete = async (fileName: string) => {
+    setDeleting(fileName);
+    try {
+      const filePath = `${user.id}/${fileName}`;
+      await deleteFile(filePath);
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete file.");
+    } finally {
+      setDeleting(null);
+      fetchFiles();
     }
   };
 
@@ -101,12 +158,24 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
     return (
       <div className="text-center py-4">
         <div className="w-8 h-8 sm:w-12 sm:h-12 bg-slate-700/50 rounded-lg flex items-center justify-center mx-auto mb-3">
-          <svg className="w-4 h-4 sm:w-6 sm:h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <svg
+            className="w-4 h-4 sm:w-6 sm:h-6 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
           </svg>
         </div>
         <p className="text-xs sm:text-sm text-slate-400">No documents yet</p>
-        <p className="text-xs text-slate-500 mt-1">Upload a document to get started</p>
+        <p className="text-xs text-slate-500 mt-1">
+          Upload a document to get started
+        </p>
       </div>
     );
   }
@@ -126,8 +195,18 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
@@ -141,25 +220,56 @@ export default function ShowFiles({ user, onFileSelect, selectedFile }: ShowFile
                 )}
               </div>
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDownload(file.name);
-              }}
-              disabled={downloading === file.name}
-              className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
-              title="Download"
-            >
-              {downloading === file.name ? (
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              ) : (
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              )}
-            </button>
+            <div className="flex gap-3 sm:gap-2 items-center">
+              {/* Download button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(file.name);
+                }}
+                disabled={downloading === file.name}
+                className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
+                title="Download"
+              >
+                {downloading === file.name ? (
+                  <svg
+                    className="w-5 h-5 sm:w-4 sm:h-4 animate-spin"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                ) : (
+                  <Download
+                    className="w-5 h-5 sm:w-4 sm:h-4 hover:text-green-400 transition-colors"
+                  />
+                )}
+              </button>
+              {/* Delete button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(file.name);
+                  console.log("deleting -->", deleting, file.name);
+                }}
+                disabled={deleting === file.name}
+              >
+                <Trash2 className="w-5 h-5 sm:w-4 sm:h-4 text-slate-400 hover:text-red-400 transition-colors" />
+              </button>
+            </div>
           </div>
         </div>
       ))}
