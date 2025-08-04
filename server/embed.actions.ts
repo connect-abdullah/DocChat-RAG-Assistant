@@ -58,26 +58,16 @@ export async function processAndStoreChunks(documentId: string, text: string) {
 
 export async function queryRelevantChunks(question: string, documentId?: string) {
     const queryEmbedding = await embedText(question);
+    console.log("→ queryRelevantChunks() - documentId:", documentId);
+
+    // Query chunks from specific document
+    const { data, error } = await supabaseAdmin.rpc("match_documents_by_id", {
+      document_id : documentId,
+      match_count: 6,
+      match_threshold: 0.12,
+      query_embedding : queryEmbedding,
+    });
     
-    let query;
-    if (documentId) {
-      // Query chunks from specific document
-      query = supabaseAdmin.rpc("match_documents_by_id", {
-        query_embedding: queryEmbedding,
-        match_threshold: 0.12,
-        match_count: 6,
-        document_id: documentId,
-      });
-    } else {
-      // Query all chunks (existing behavior)
-      query = supabaseAdmin.rpc("match_documents", {
-        query_embedding: queryEmbedding,
-        match_threshold: 0.12,
-        match_count: 6,
-      });
-    }
-    
-    const { data, error } = await query;
   
     if (error) {
       console.error("Vector search failed:", error);

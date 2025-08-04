@@ -105,6 +105,7 @@ const Page = () => {
           
           // Load document information and create session in one flow
           const document = await getDocumentByFileName(selectedFile, user.id);
+          console.log("document", document);
           
           if (document) {
             setCurrentDocument({
