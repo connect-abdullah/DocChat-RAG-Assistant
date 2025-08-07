@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const decoder = new TextDecoder();
     
     let fullResponse = "";
+    let buffer = "";
     
     const readableStream = new ReadableStream({
       async start(controller) {
@@ -38,7 +39,11 @@ export async function POST(request: NextRequest) {
             }
             
             const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            buffer += chunk;
+            
+            const lines = buffer.split('\n');
+            // Keep the last line in buffer as it might be incomplete
+            buffer = lines.pop() || "";
             
             for (const line of lines) {
               if (line.startsWith('data: ')) {
@@ -55,6 +60,9 @@ export async function POST(request: NextRequest) {
                   return;
                 }
                 
+                // Skip empty lines
+                if (!data.trim()) continue;
+                
                 try {
                   const parsed = JSON.parse(data);
                   const content = parsed.choices?.[0]?.delta?.content;
@@ -65,7 +73,9 @@ export async function POST(request: NextRequest) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
                 } catch (e) {
-                  console.error(e)
+                  // Log the error but continue processing
+                  console.error('JSON parse error:', e, 'Data:', data);
+                  // Don't throw here, just continue with the next line
                 }
               }
             }
